@@ -22,12 +22,32 @@ var trayTile = {"height":12,
 							"sprTrayFill"
 						]		
 				};
+				
+var gastroFieldTile = {"height":1,
+				"width":12,
+				"data":[5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+				"x":0,
+				"y":320,
+				"tileheight":32,
+				"tilewidth":32,
+				"tiles":[	"sprTrayHG",
+							"sprTrayHD",
+							"sprTrayBD",
+							"sprTrayBG",
+							"sprTrayH",
+							"sprTrayD",
+							"sprTrayB",
+							"sprTrayG",
+							"sprTrayFill"
+						]		
+				};
 
 function drawTileset(data) {
 	//draws a tileset with a JSON format
 	var posData = 0;
-	for (var y = data.y; y < (data.height * data.tileheight); y += data.tileheight) {
-		for (var x = data.x; x < (data.width * data.tilewidth); x += data.tilewidth) {
+	for (var y = data.y; y < (data.y+(data.height * data.tileheight)); y += data.tileheight) {
+		for (var x = data.x; x < (data.x+(data.width * data.tilewidth)); x += data.tilewidth) {
+			// console.log(data.tiles[data.data[posData]-1], x, y);
 			Crafty.e("2D, Canvas, "+data.tiles[data.data[posData]-1])
 				.attr({ x: x, y: y });
 			posData++;
@@ -39,6 +59,8 @@ Crafty.audio.add("broken", "assets/broken.mp3");
 
 Crafty.sprite(128, "assets/plate.png", {sprPlate:[0,0]});
 Crafty.sprite(96, "assets/bowl.png", {sprBowl:[0,0]});
+Crafty.sprite(128, "assets/plate_dirty.png", {sprPlateDirty:[0,0]});
+Crafty.sprite(96, "assets/bowl_dirty.png", {sprBowlDirty:[0,0]});
 Crafty.sprite("assets/plate_in_tray.png", {sprPlateInTray:[0,0,126,23]});
 Crafty.sprite("assets/bowl_in_tray.png", {sprBowlInTray:[0,0,90,28]});
 Crafty.sprite(32, "assets/tray.png", {
@@ -52,7 +74,13 @@ Crafty.sprite(32, "assets/tray.png", {
 										sprTrayG:[7,0],
 										sprTrayFill:[8,0]
 									});
+									
+									
+									
+Crafty.sprite("assets/gastro.png", {sprGastro:[0,0,96,32]});
+Crafty.sprite("assets/pad.png", {sprPad:[0,0,96,32]});
 
+									
 var trayContent = new Array(),
 	platesArray = new Array();
 
@@ -63,7 +91,7 @@ Crafty.scene("TrayLoad", function () {
 		init: function() {},
 		pos: function(xPlate, yPlate) {
 			var nbPlatesText = Crafty.e("2D, DOM, Text").attr({ x: xPlate, y: yPlate }).text(nbPlatesGlobal);
-			var obj = Crafty.e("2D, Canvas, Mouse, sprPlate")
+			var obj = Crafty.e("2D, Canvas, Mouse, sprPlateDirty")
 				.attr({ x: xPlate, y: yPlate, z:1 })
 				.bind('MouseDown', function (e) {
 					// on MouseDown we create a new instance of the plate
@@ -112,7 +140,7 @@ Crafty.scene("TrayLoad", function () {
 		init: function() {},
 		pos: function(xBowl,yBowl) {
 			var nbBowlsText = Crafty.e("2D, DOM, Text").attr({ x: xBowl, y: yBowl }).text(nbBowlsGlobal);
-			var obj = Crafty.e("2D, Canvas, Mouse, sprBowl")
+			var obj = Crafty.e("2D, Canvas, Mouse, sprBowlDirty")
 				.attr({ x: xBowl, y: yBowl, z:1 })
 				.bind('MouseDown', function (e) {
 					if (nbBowlsGlobal > 0) {
@@ -194,7 +222,7 @@ Crafty.scene("TrayUnload", function () {
 				.bind('MouseDown', function (e) {
 					this.destroy();
 					var m = Crafty.DOM.translate(e.x, e.y);
-					Crafty.e("2D, Canvas, Mouse, Draggable, sprPlate, Collision, WiredHitBox")
+					Crafty.e("2D, Canvas, Mouse, Draggable, sprPlate, Collision")
 						.attr({ x: m.x - 64, y: m.y - 64, z:2 })
 						.startDrag()
 						.bind('MouseUp', function(e) {
@@ -216,7 +244,7 @@ Crafty.scene("TrayUnload", function () {
 	Crafty.c("plateGoal", {
 		init: function() {},
 		pos: function(xPlate, yPlate) {
-			var obj = Crafty.e("2D, Canvas, Mouse, sprPlate, Collision, WiredHitBox")
+			var obj = Crafty.e("2D, Canvas, Mouse, sprPlate, Collision")
 				.attr({ x: xPlate, y: yPlate, z:1 })
 				.collision([55,55], [75,55], [75,75], [55,75])
 			;
@@ -231,7 +259,7 @@ Crafty.scene("TrayUnload", function () {
 				.bind('MouseDown', function (e) {
 					this.destroy();
 					var m = Crafty.DOM.translate(e.x, e.y);
-					Crafty.e("2D, Canvas, Mouse, Draggable, sprBowl, Collision, WiredHitBox")
+					Crafty.e("2D, Canvas, Mouse, Draggable, sprBowl, Collision")
 						.attr({ x: m.x - 48, y: m.y - 48, z:2 })
 						.startDrag()
 						.bind('MouseUp', function(e) {
@@ -253,7 +281,7 @@ Crafty.scene("TrayUnload", function () {
 	Crafty.c("bowlGoal", {
 		init: function() {},
 		pos: function(xBowl,yBowl) {
-			var obj = Crafty.e("2D, Canvas, Mouse, sprBowl, Collision, WiredHitBox")
+			var obj = Crafty.e("2D, Canvas, Mouse, sprBowl, Collision")
 				.attr({ x: xBowl, y: yBowl, z:1 })
 				.collision([40,40], [55,40], [55,55], [40,55])
 			;
@@ -292,4 +320,101 @@ Crafty.scene("TrayUnload", function () {
 	Crafty.e("bowlGoal").pos(450, 250);
 });
 
-Crafty.scene("TrayLoad");
+Crafty.scene("GastroSort", function () {
+	var bottomArray = new Array();
+	for (var i = 0; i < 4; i++) {
+		bottomArray[i] = new Array();
+	}
+
+	function redrawGastro(pos) {
+		// we redraw the column at position pos
+		// function called when there's been a modification in that column
+		console.log(bottomArray[pos]);
+		bottomArray[pos].shift();
+		console.log(bottomArray[pos]);
+		for (var i=0; i < bottomArray[pos].length; i++) {
+			var oldY = Crafty(bottomArray[pos][i]).y;
+			Crafty(bottomArray[pos][i]).attr({ x:Crafty(bottomArray[pos][i]).x, y:oldY+32 });
+		}
+	}
+	
+	Crafty.c("gastro", {
+		"init": function () {
+			var xGastro, yGastro = 0;
+			var colorsArray = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00"];
+			var stopMovement = false;
+			var posGastroArray = Crafty.math.randomInt(0,3);
+			xGastro = posGastroArray*96;
+			Crafty.e("2D, Canvas, Tint, Collision, sprGastro")
+				.attr({ x: xGastro, y: yGastro })
+				.tint(Crafty.math.randomElementOfArray(colorsArray), 0.5)
+				.bind('MoveGastro', function(e) {
+					// when the event is triggered, we move the gastro
+					if (!stopMovement) {
+						if ((yGastro+32) < gastroFieldTile.y) {
+							yGastro += 32;
+							this.attr({ x: this.x, y: yGastro });
+							if (this.hit("sprGastro")) {
+								yGastro -= 32;
+								this.attr({ x: this.x, y: yGastro });
+								stopMovement = true;
+								bottomArray[posGastroArray][((gastroFieldTile.y/gastroFieldTile.tileheight) - (yGastro/32) - 1)] = this[0];
+								// console.log((gastroFieldTile.y/gastroFieldTile.tileheight) - (yGastro/32) - 1);
+								// console.log(bottomArray);
+							}
+						} else {
+							this.attr({ x: this.x, y: (gastroFieldTile.y - 32) });
+							stopMovement = true;
+							bottomArray[posGastroArray][0] = this[0];
+							// console.log(posGastroArray, bottomArray[posGastroArray][0]);
+							// console.log(bottomArray);
+						}
+					}
+				})
+			;
+		}
+	});
+	
+	Crafty.c("pad", {
+		"init": function () {
+			var isKeyDown = false;
+			Crafty.e("2D, Canvas, sprPad")
+				.attr({ x:0, y:(gastroFieldTile.y + gastroFieldTile.tileheight) })
+				.bind('KeyDown', function(e) {
+					if (!isKeyDown) {
+						if(e.key == Crafty.keys['LEFT_ARROW']) {
+							if (this.x - 96 >= 0)
+								this.x -= 96;
+							isKeyDown = true;
+						} else if (e.key == Crafty.keys['RIGHT_ARROW']) {
+							if (this.x + 96 <= (96*3))
+								this.x += 96;
+							isKeyDown = true;
+						} else if (e.key == Crafty.keys['J']) {
+							Crafty(bottomArray[Math.round(this.x/96)][0]).
+								attr({x:500, y:20 });
+							bottomArray[Math.round(this.x/96)][0] = -1;
+							redrawGastro(Math.round(this.x/96));
+							isKeyDown = true;
+						}
+					}
+				})
+				.bind('KeyUp', function(e) {
+					isKeyDown = false;
+				})
+			;
+		}
+	});
+	
+	// let's create a new event
+	Crafty.addEvent(this, window.document, "MoveGastro", null);
+	
+	drawTileset(gastroFieldTile);
+	Crafty.e("pad");
+	
+	// we trigger tht new event every X ms, this orders to all the gastro to move at the same time
+	window.setInterval(function () {Crafty.trigger("MoveGastro");}, 500);
+	window.setInterval(function () {Crafty.e("gastro");}, 1000);
+});
+
+Crafty.scene("GastroSort");
