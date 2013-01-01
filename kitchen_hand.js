@@ -55,7 +55,7 @@ function drawTileset(data) {
 	}
 }
 
-Crafty.audio.add("broken", "assets/broken.mp3");
+Crafty.audio.add("broken", "assets/broken.mp3"); // http://www.freesound.org/people/tezzza/sounds/21613/
 
 Crafty.sprite(128, "assets/plate.png", {sprPlate:[0,0]});
 Crafty.sprite(96, "assets/bowl.png", {sprBowl:[0,0]});
@@ -339,15 +339,15 @@ Crafty.scene("GastroSort", function () {
 	}
 	
 	Crafty.c("gastro", {
-		"init": function () {
-			var xGastro, yGastro = 0;
-			var colorsArray = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00"];
+		_colorsArray: ["#FF0000", "#00FF00", "#0000FF", "#FFFF00"],
+		init: function () {
+			/* var xGastro, yGastro = 0;
 			var stopMovement = false;
 			var posGastroArray = Crafty.math.randomInt(0,3);
 			xGastro = posGastroArray*96;
 			Crafty.e("2D, Canvas, Tint, Collision, sprGastro")
 				.attr({ x: xGastro, y: yGastro })
-				.tint(Crafty.math.randomElementOfArray(colorsArray), 0.5)
+				.tint(Crafty.math.randomElementOfArray(this._colorsArray), 0.5)
 				.bind('MoveGastro', function(e) {
 					// when the event is triggered, we move the gastro
 					if (!stopMovement) {
@@ -371,31 +371,102 @@ Crafty.scene("GastroSort", function () {
 						}
 					}
 				})
+			; */
+		},
+		gastro: function (xGastro, yGastro, color) { // color is a number between 0 and 3
+			var setPosition = false; // position not set by default
+			if (typeof xGastro == 'undefined') {
+				var posGastroArray = Crafty.math.randomInt(0,3);
+				var xGastro = posGastroArray*96;
+			} else {
+				var posGastroArray = Math.round(xGastro/96);
+				setPosition = true; //we set the position, so we don't wnt to update this gastro movement
+			}
+			
+			if (typeof yGastro == 'undefined') 
+				var yGastro = 0;
+			
+			if (typeof color == 'undefined')
+				var color = Crafty.math.randomInt(0,3);
+
+			// this.currentColor = color;
+			// console.log("in", this.currentColor);
+				
+			var stopMovement = false;
+			Crafty.e("2D, Canvas, Tint, Collision, sprGastro")
+				.attr({ x: xGastro, y: yGastro, currentColor: color })
+				.tint(this._colorsArray[color], 0.5)
+				.bind('MoveGastro', function(e) {
+					// when the event is triggered, we move the gastro
+					// we do nothing when the position was manually set
+					if (!stopMovement && !setPosition) {
+						if ((yGastro+32) < gastroFieldTile.y) {
+							yGastro += 32;
+							this.attr({ x: this.x, y: yGastro });
+							if (this.hit("sprGastro")) {
+								yGastro -= 32;
+								this.attr({ x: this.x, y: yGastro });
+								stopMovement = true;
+								bottomArray[posGastroArray][((gastroFieldTile.y/gastroFieldTile.tileheight) - (yGastro/32) - 1)] = this[0];
+							}
+						} else {
+							this.attr({ x: this.x, y: (gastroFieldTile.y - 32) });
+							stopMovement = true;
+							bottomArray[posGastroArray][0] = this[0];
+						}
+					}
+				})
 			;
 		}
 	});
 	
 	Crafty.c("pad", {
-		"init": function () {
+		init: function () {
 			var isKeyDown = false;
+			var padLoadId = -1; // the ID of the gastro on our pad
 			Crafty.e("2D, Canvas, sprPad")
 				.attr({ x:0, y:(gastroFieldTile.y + gastroFieldTile.tileheight) })
 				.bind('KeyDown', function(e) {
 					if (!isKeyDown) {
 						if(e.key == Crafty.keys['LEFT_ARROW']) {
-							if (this.x - 96 >= 0)
+							if (this.x - 96 >= 0) {
 								this.x -= 96;
+								if (padLoadId != -1)
+									Crafty(padLoadId).
+										attr({x:this.x, y:(this.y-32) });
+							}
 							isKeyDown = true;
 						} else if (e.key == Crafty.keys['RIGHT_ARROW']) {
-							if (this.x + 96 <= (96*3))
+							if (this.x + 96 <= (96*3)) {
 								this.x += 96;
+								if (padLoadId != -1)
+									Crafty(padLoadId).
+										attr({x:this.x, y:(this.y-32) });
+							}
 							isKeyDown = true;
 						} else if (e.key == Crafty.keys['J']) {
-							Crafty(bottomArray[Math.round(this.x/96)][0]).
-								attr({x:500, y:20 });
-							bottomArray[Math.round(this.x/96)][0] = -1;
-							redrawGastro(Math.round(this.x/96));
-							isKeyDown = true;
+							if (padLoadId != -1) {
+								// we unload the gastro and empty the pad
+								if (Crafty(padLoadId).currentColor == Math.round(this.x/96)) {
+									// if we unload on the right color
+									var n = Crafty(gastroCounter[Math.round(this.x/96)][0]).text();
+									n++;
+									Crafty(gastroCounter[Math.round(this.x/96)][0]).text(n);
+								}
+								Crafty(padLoadId).destroy();
+								padLoadId = -1;
+								this.y -= 32;
+								isKeyDown = true;
+							} else if (typeof bottomArray[Math.round(this.x/96)][0] != "undefined") {
+								// empty pad, so we load the gastro
+								padLoadId = bottomArray[Math.round(this.x/96)][0];
+								this.y += 32;
+								Crafty(padLoadId).
+									attr({x:this.x, y:(this.y-32) });
+								bottomArray[Math.round(this.x/96)][0] = -1;
+								redrawGastro(Math.round(this.x/96));
+								isKeyDown = true;
+							}
 						}
 					}
 				})
@@ -411,10 +482,20 @@ Crafty.scene("GastroSort", function () {
 	
 	drawTileset(gastroFieldTile);
 	Crafty.e("pad");
+	var gastroCounter = new Array();
+	for (var i=0; i<4; i++) {
+		gastroCounter[i] = Crafty.e("2D, Text, DOM")
+			.attr({ x:(i*96)+48, y:448 })
+			.text(0);
+			
+		Crafty.e("gastro")
+			.gastro((i*96),448,i);
+	}
 	
-	// we trigger tht new event every X ms, this orders to all the gastro to move at the same time
-	window.setInterval(function () {Crafty.trigger("MoveGastro");}, 500);
-	window.setInterval(function () {Crafty.e("gastro");}, 1000);
+	// we trigger that new event every X ms, this orders to all the gastro to move at the same time
+	// window.setInterval(function () {Crafty.trigger("MoveGastro");}, 500);
+	// we add a new gastro every second
+	// window.setInterval(function () {Crafty.e("gastro").gastro();}, 1000);
 });
 
 Crafty.scene("GastroSort");
